@@ -106,6 +106,7 @@ int correction_value(const Worker& w, const Position& pos, const Stack* const ss
               * ((*(ss - 2)->continuationCorrectionHistory)[pos.piece_on(m.to_sq())][m.to_sq()]
                  + (*(ss - 4)->continuationCorrectionHistory)[pos.piece_on(m.to_sq())][m.to_sq()])
             + 6307 * (*(ss - 6)->continuationCorrectionHistory)[pos.piece_on(m.to_sq())][m.to_sq()]
+            + 6307 * w.prevMoveCorrectionHistory[pos.piece_on(m.to_sq())][m.to_sq()]
           : 80695;
 
     return 13806 * pcv + 9512 * micv + 11615 * (wnpcv + bnpcv) + cntcv;
@@ -139,6 +140,7 @@ void update_correction_history(const Position& pos,
         (*(ss - 2)->continuationCorrectionHistory)[pc][to] << bonus * 130 / 128;
         (*(ss - 4)->continuationCorrectionHistory)[pc][to] << bonus * 70 / 128;
         (*(ss - 6)->continuationCorrectionHistory)[pc][to] << bonus * 35 / 128;
+        workerThread.prevMoveCorrectionHistory[pc][to] << bonus * 96 / 128;
     }
 }
 
@@ -731,6 +733,8 @@ void Search::Worker::clear() {
     for (auto& to : continuationCorrectionHistory)
         for (auto& h : to)
             h.fill(5);
+
+    prevMoveCorrectionHistory.fill(0);
 
     refreshTable.clear(network[numaAccessToken]);
 }
