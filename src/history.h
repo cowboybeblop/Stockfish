@@ -237,13 +237,19 @@ struct SharedHistories {
         return correctionHistory[pos.minor_piece_key() & sizeMinus1];
     }
 
+    // The non-pawn key of a side also includes that side's castling rights
+    template<Color c>
+    static Key nonpawn_correction_key(const Position& pos) {
+        const Key cr = pos.can_castle(c & KING_SIDE) + 2 * pos.can_castle(c & QUEEN_SIDE);
+        return pos.non_pawn_key(c) ^ (cr * 0x9E3779B97F4A7C15ULL);
+    }
     template<Color c>
     auto& nonpawn_correction_entry(const Position& pos) {
-        return correctionHistory[pos.non_pawn_key(c) & sizeMinus1];
+        return correctionHistory[nonpawn_correction_key<c>(pos) & sizeMinus1];
     }
     template<Color c>
     const auto& nonpawn_correction_entry(const Position& pos) const {
-        return correctionHistory[pos.non_pawn_key(c) & sizeMinus1];
+        return correctionHistory[nonpawn_correction_key<c>(pos) & sizeMinus1];
     }
 
     UnifiedCorrectionHistory               correctionHistory;
