@@ -142,6 +142,14 @@ void update_correction_history(const Position& pos,
     }
 }
 
+// Whether a pawn of color c on s has no enemy pawn ahead of it on its own or adjacent files
+bool is_passed_pawn(const Position& pos, Color c, Square s) {
+    const Bitboard files = file_bb(s) | shift(file_bb(s), EAST) | shift(file_bb(s), WEST);
+    const Bitboard ahead =
+      c == WHITE ? ~Bitboard(0) << 8 * (rank_of(s) + 1) : ~Bitboard(0) >> 8 * (8 - rank_of(s));
+    return !(pos.pieces(~c, PAWN) & files & ahead);
+}
+
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(usize nodes) { return VALUE_DRAW - 1 + Value(nodes & 0x2); }
 Value value_to_tt(Value v, int ply);
@@ -1387,6 +1395,11 @@ moves_loop:  // When in check, search starts here
         // Scale up reductions for expected ALL nodes
         if (allNode)
             r += r * 276 / (256 * depth + 268);
+
+        // Decrease reduction for passed pawn pushes to the 6th rank and beyond
+        if (type_of(movedPiece) == PAWN && relative_rank(us, move.to_sq()) >= RANK_6
+            && is_passed_pawn(pos, us, move.to_sq()))
+            r -= 1024;
 
         // When seeking a mate, reduce non-checking moves more and checking moves less
         if (seekMate && r > 0)
