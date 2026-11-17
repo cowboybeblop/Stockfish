@@ -230,11 +230,16 @@ struct SharedHistories {
         return correctionHistory[pos.pawn_key() & sizeMinus1];
     }
 
+    // The minor piece correction key also includes a coarse 50-move rule counter
+    static Key minor_piece_correction_key(const Position& pos) {
+        const Key r50 = std::min(pos.rule50_count(), 63) / 16;
+        return pos.minor_piece_key() ^ (r50 * 0x9E3779B97F4A7C15ULL);
+    }
     auto& minor_piece_correction_entry(const Position& pos) {
-        return correctionHistory[pos.minor_piece_key() & sizeMinus1];
+        return correctionHistory[minor_piece_correction_key(pos) & sizeMinus1];
     }
     const auto& minor_piece_correction_entry(const Position& pos) const {
-        return correctionHistory[pos.minor_piece_key() & sizeMinus1];
+        return correctionHistory[minor_piece_correction_key(pos) & sizeMinus1];
     }
 
     template<Color c>
